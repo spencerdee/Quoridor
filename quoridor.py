@@ -22,7 +22,7 @@ class Board:
 
   # sets the contents of the square at (row, col)
   def bset(self, row, col, item):
-    self.grid.itemset((int(row*2), int(col*2)), item)
+    self.grid[int(row*2), int(col*2)] = item
 
 class Path:
   def __init__(self, curr, key, prev=None):
@@ -72,9 +72,9 @@ class Game:
     for i in range(len(self.board.grid)):
       for j in range(len(self.board.grid[i])):
         if i % 2 == 1 and j % 2 == 1:
-          self.board.grid.itemset((i, j), 'O')
+          self.board.grid[i, j] = 'O'
         elif (i + j) % 2 == 1:
-          self.board.grid.itemset((i, j), 'O')
+          self.board.grid[i, j] = 'O'
     self.board.bset(self.white[0], self.white[1], 'W')
     self.board.bset(self.black[0], self.black[1], 'B')
 
