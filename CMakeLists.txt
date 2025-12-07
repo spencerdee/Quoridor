@@ -9,7 +9,7 @@ project(ProjectName VERSION 1.0 LANGUAGES CXX)
 # set(PATTERNS "${PROJECT_SOURCE_DIR}/*.cpp" "${PROJECT_SOURCE_DIR}/*.h")
 # file(GLOB_RECURSE PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
-set(PATTERNS "*.cpp" "*.h")
+set(PATTERNS "*.cpp" "*.h" "*.hpp")
 globber("${PATTERNS}")
 
 # add_library(LibraryName LIBRARY_SOURCES_HERE)
