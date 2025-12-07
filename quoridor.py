@@ -124,9 +124,9 @@ class Game:
     if self.board.grid[target[0], target[1]] != 'O' and self.board.grid[target[0] + toCheck[0][0], target[1] + toCheck[0][1]] != 'O' and self.board.grid[target[0] + toCheck[1][0], target[1] + toCheck[1][1]] != 'O':
       return False
     else:
-      self.board.grid.itemset((int(target[0]), int(target[1])), 'C')
-      self.board.grid.itemset((int(target[0] + toCheck[0][0]), int(target[1] + toCheck[0][1])), 'C')
-      self.board.grid.itemset(int(target[0] + toCheck[1][0]), int(target[1] + toCheck[1][1]), 'C')
+      self.board.grid[int(target[0]), int(target[1])] = 'C'
+      self.board.grid[int(target[0] + toCheck[0][0]), int(target[1] + toCheck[0][1])] = 'C'
+      self.board.grid[int(target[0] + toCheck[1][0]), int(target[1] + toCheck[1][1])] = 'C'
       return True
 
   # generate a list valid of pawn moves for whomever's turn it is
