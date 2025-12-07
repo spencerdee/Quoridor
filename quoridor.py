@@ -444,8 +444,5 @@ class Game:
       return beta
 
 g = Game(3, 3, 1)
+g.play(True, 5, True)
 g.movePiece((1, 1))
-l = g.genNewMoves()
-for p in l:
-  g.board.bset(p[0], p[1], 'M')
-print(g.printout())
