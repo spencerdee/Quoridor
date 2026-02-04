@@ -6,6 +6,11 @@ include(cmake/globber.cmake)
 # Listing the version is nice here since it sets lots of useful variables
 project(ProjectName VERSION 1.0 LANGUAGES CXX)
 
+# Request C++20 as the minimum standard
+set(CMAKE_CXX_STANDARD 20)
+# Enforce that the compiler must support this standard (no decay to older versions)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # set(PATTERNS "${PROJECT_SOURCE_DIR}/*.cpp" "${PROJECT_SOURCE_DIR}/*.h")
 # file(GLOB_RECURSE PROJECT_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 

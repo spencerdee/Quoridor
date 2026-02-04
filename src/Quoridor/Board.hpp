@@ -7,6 +7,66 @@ struct BoardPosition
 {
     int row;
     int col;
+
+    bool operator==(const BoardPosition& other) const
+    {
+        return row == other.row && col == other.col;
+    }
+
+    bool operator<(const BoardPosition& other) const
+    {
+        return (row < other.row) || (row == other.row && col < other.col);
+    }
+};
+
+struct BlockPosition
+{
+    int row;
+    int col;
+    bool horizontal;
+};
+
+struct Turn
+{
+    union
+    {
+        BoardPosition move;
+        BlockPosition block;
+    } turn;
+    bool isBlock;
+
+    Turn(BoardPosition position, bool isBlock)
+    {
+        turn.move = position;
+        this->isBlock = isBlock;
+    };
+
+    Turn(BlockPosition blockPosition, bool isBlock)
+    {
+        turn.block = blockPosition;
+        this->isBlock = isBlock;
+    };
+
+    Turn() {};
+};
+
+struct AStarNode
+{
+    BoardPosition position;
+    int gCost; // Cost from start to current node
+    int hCost; // Heuristic cost from current node to goal
+    int fCost() const { return gCost + hCost; } // Total cost
+    AStarNode* parent; // Pointer to parent node for path reconstruction
+
+    bool operator>(const AStarNode& other) const
+    {
+        return fCost() > other.fCost();
+    }
+
+    bool operator<(const AStarNode& other) const
+    {
+        return fCost() < other.fCost();
+    }
 };
 
 template <int rows = 9, int cols = 9>
@@ -29,22 +89,15 @@ class Board
         void PrintBoard()
         {
             printf("  ");
-            for (int i = 0; i < cols; i++)
+            for (int i = 0; i < cols * 2 - 1; i++)
             {
-                printf("%d   ", i);
+                printf("%d ", i % 10);
             }
 
             printf("\n");
             for (int i = 0; i < rows * 2 - 1; i++)
             {
-                if (i % 2 == 0)
-                {
-                    printf("%d ", i / 2);
-                }
-                else
-                {
-                    printf("  ");
-                }
+                printf("%d ", i % 10);
 
                 for (int j = 0; j < cols * 2 - 1; j++)
                 {
