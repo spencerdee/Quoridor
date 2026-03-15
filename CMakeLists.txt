@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.25)
 
 include(cmake/globber.cmake)
 
@@ -33,4 +33,8 @@ file(TO_CMAKE_PATH "$ENV{HOME}" HOME_CMAKE)
 # find packages
 find_package(Threads REQUIRED)
 
-target_link_libraries(ProjectName Threads::Threads ws2_32)
+if (WIN32)
+    target_link_libraries(ProjectName Threads::Threads ws2_32)
+else()
+    target_link_libraries(ProjectName Threads::Threads)
+endif()

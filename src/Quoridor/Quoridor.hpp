@@ -127,20 +127,7 @@ class Quoridor
                 {
                     bestValue = value;
                     bestTurn = turn;
-                    // printf("=- New Best Value: %d\n", value);
-                    // printf("   New Best Turn: %d %d %d %d\n", turn.isBlock,
-                    //                                                turn.isBlock ? turn.turn.block.row : turn.turn.move.row,
-                    //                                                turn.isBlock ? turn.turn.block.col : turn.turn.move.col,
-                    //                                                turn.turn.block.horizontal);
                 }
-                // else
-                // {
-                //     printf("-- Value: %d\n", value);
-                //     printf("   Turn: %d %d %d %d\n", turn.isBlock,
-                //                                                    turn.isBlock ? turn.turn.block.row : turn.turn.move.row,
-                //                                                    turn.isBlock ? turn.turn.block.col : turn.turn.move.col,
-                //                                                    turn.turn.block.horizontal);
-                // }
 
                 if (value >= MAX_VALUE / 2)
                 {
@@ -177,10 +164,6 @@ class Quoridor
                 {
                     value = GetMinimaxCost(rootWhite);
                 }
-
-                // printf("Node Value: %d\n", value);
-                // PrintBoard();
-                // printf("\n");
 
                 UndoMove(turn, white, currentPosition);
                 
@@ -237,7 +220,6 @@ class Quoridor
                     }
                     UndoMove(turn, white, currentPosition);
 
-                    // printf("%s Best Value at depth %d: %d\n", !white ? "White" : "Black", depth, bestValue);
                     return bestValue;
                 }
             }
