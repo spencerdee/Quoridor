@@ -19,17 +19,17 @@ class Quoridor
         Quoridor(int blocksPerPlayer = 10)
         {
             this->blocksPerPlayer = blocksPerPlayer;
-            whiteBlocks = blocksPerPlayer;
-            blackBlocks = blocksPerPlayer;
+            gameState.whiteBlocks = blocksPerPlayer;
+            gameState.blackBlocks = blocksPerPlayer;
             srand(static_cast<unsigned int>(std::time(nullptr)));
         };
         ~Quoridor() {};
 
         void PrintBoard()
         {
-            board.PrintBoard();
-            printf("White Blocks Remaining: %d\n", whiteBlocks);
-            printf("Black Blocks Remaining: %d\n", blackBlocks);
+            gameState.PrintBoard();
+            printf("White Blocks Remaining: %d\n", gameState.whiteBlocks);
+            printf("Black Blocks Remaining: %d\n", gameState.blackBlocks);
         };
 
         bool PlayRandomTurn(bool white = true)
@@ -37,11 +37,11 @@ class Quoridor
             BoardPosition currentPosition;
             if (white)
             {
-                currentPosition = board.whitePosition;
+                currentPosition = gameState.whitePosition;
             }
             else
             {
-                currentPosition = board.blackPosition;
+                currentPosition = gameState.blackPosition;
             }
             std::vector<Turn> validTurns;
             GenerateValidMoves(currentPosition, validTurns);
@@ -56,13 +56,13 @@ class Quoridor
             BoardPosition opponentPosition;
             if (white)
             {
-                currentPosition = board.whitePosition;
-                opponentPosition = board.blackPosition;
+                currentPosition = gameState.whitePosition;
+                opponentPosition = gameState.blackPosition;
             }
             else
             {
-                currentPosition = board.blackPosition;
-                opponentPosition = board.whitePosition;
+                currentPosition = gameState.blackPosition;
+                opponentPosition = gameState.whitePosition;
             }
             std::vector<Turn> validTurns;
             GenerateValidMoves(currentPosition, validTurns);
@@ -106,13 +106,13 @@ class Quoridor
             BoardPosition opponentPosition;
             if (white)
             {
-                currentPosition = board.whitePosition;
-                opponentPosition = board.blackPosition;
+                currentPosition = gameState.whitePosition;
+                opponentPosition = gameState.blackPosition;
             }
             else
             {
-                currentPosition = board.blackPosition;
-                opponentPosition = board.whitePosition;
+                currentPosition = gameState.blackPosition;
+                opponentPosition = gameState.whitePosition;
             }
             std::vector<Turn> validTurns;
             GenerateValidMoves(currentPosition, validTurns);
@@ -137,6 +137,32 @@ class Quoridor
             return PlayMove(bestTurn, white);
         };
 
+        bool PlayMonteCarloMove(bool white = true, int simulations = 1000)
+        {
+            // generate valid moves at current state
+            std::vector<Turn> validTurns;
+            GenerateValidMoves(white ? gameState.whitePosition : gameState.blackPosition, validTurns);
+            GenerateValidBlocks(white, validTurns);
+
+            for (int i = 0; i < simulations; i++)
+            {
+                int bestValue = -MAX_VALUE;
+                // selection - select best child based on hueristic
+                for (const auto& turn : validTurns)
+                {
+                    PlayMove(turn, white);
+                    int cost = AStarSearch(white ? gameState.whitePosition : gameState.blackPosition, white) - AStarSearch(white ? gameState.blackPosition : gameState.whitePosition, !white);
+                    UndoMove(turn, white);
+                    if (cost >= MAX_VALUE)
+                    {
+                        return PlayMove(turn, white);
+                    }
+                }
+            }
+        }
+
+
+
         int GetTreeValue(Turn turn, bool white, uint8_t depth, int alpha, int beta, bool maximizing, bool rootWhite)
         {
             BoardPosition currentPosition;
@@ -144,13 +170,13 @@ class Quoridor
 
             if (white)
             {
-                currentPosition = board.whitePosition;
-                opponentPosition = board.blackPosition;
+                currentPosition = gameState.whitePosition;
+                opponentPosition = gameState.blackPosition;
             }
             else
             {
-                currentPosition = board.blackPosition;
-                opponentPosition = board.whitePosition;
+                currentPosition = gameState.blackPosition;
+                opponentPosition = gameState.whitePosition;
             }
 
             if (depth == 0)
@@ -231,11 +257,11 @@ class Quoridor
         {
             if (!white)
             {
-                return AStarSearch(board.whitePosition, true) + whiteBlocks - AStarSearch(board.blackPosition, false) - blackBlocks;
+                return AStarSearch(gameState.whitePosition, true) + gameState.whiteBlocks - AStarSearch(gameState.blackPosition, false) - gameState.blackBlocks;
             }
             else
             {
-                return AStarSearch(board.blackPosition, false) + blackBlocks - AStarSearch(board.whitePosition, true) - whiteBlocks;
+                return AStarSearch(gameState.blackPosition, false) + gameState.blackBlocks - AStarSearch(gameState.whitePosition, true) - gameState.whiteBlocks;
             }
         };
 
@@ -255,9 +281,9 @@ class Quoridor
                 // Check if the new position is within bounds and there is no wall blocking the way
                 if (newRow >= 0 && newRow < rows * 2 - 1 &&
                     newCol >= 0 && newCol < cols * 2 - 1 &&
-                    board.board[position.row + dir[0] / 2][position.col + dir[1] / 2] == 0)
+                    gameState.board[position.row + dir[0] / 2][position.col + dir[1] / 2] == 0)
                 {
-                    if (board.board[newRow][newCol] == 0 || ignorePawns)
+                    if (gameState.board[newRow][newCol] == 0 || ignorePawns)
                     {
                         validTurns.push_back({BoardPosition{newRow, newCol}, false});
                     }
@@ -268,8 +294,8 @@ class Quoridor
                         int jumpCol = newCol + dir[1];
                         if (jumpRow >= 0 && jumpRow < rows * 2 - 1 &&
                             jumpCol >= 0 && jumpCol < cols * 2 - 1 &&
-                            board.board[newRow + dir[0] / 2][newCol + dir[1] / 2] == 0 &&
-                            board.board[jumpRow][jumpCol] == 0)
+                            gameState.board[newRow + dir[0] / 2][newCol + dir[1] / 2] == 0 &&
+                            gameState.board[jumpRow][jumpCol] == 0)
                         {
                             validTurns.push_back({BoardPosition{jumpRow, jumpCol}, false});
                         }
@@ -286,8 +312,8 @@ class Quoridor
                                 int sideCol = newCol + sideDir[1];
                                 if (sideRow >= 0 && sideRow < rows * 2 - 1 &&
                                     sideCol >= 0 && sideCol < cols * 2 - 1 &&
-                                    board.board[newRow + sideDir[0] / 2][newCol + sideDir[1] / 2] == 0 &&
-                                    board.board[sideRow][sideCol] == 0)
+                                    gameState.board[newRow + sideDir[0] / 2][newCol + sideDir[1] / 2] == 0 &&
+                                    gameState.board[sideRow][sideCol] == 0)
                                 {
                                     validTurns.push_back({BoardPosition{sideRow, sideCol}, false});
                                 }
@@ -300,11 +326,11 @@ class Quoridor
 
         void GenerateValidBlocks(bool white, std::vector<Turn>& validTurns)
         {
-            if (white && whiteBlocks == 0)
+            if (white && gameState.whiteBlocks == 0)
             {
                 return;
             }
-            else if (!white && blackBlocks == 0)
+            else if (!white && gameState.blackBlocks == 0)
             {
                 return;
             }
@@ -313,18 +339,18 @@ class Quoridor
                 for (int col = 1; col < cols * 2 - 1; col += 2)
                 {
                     // Check horizontal placement
-                    if (board.board[row][col - 1] == 0 &&
-                        board.board[row][col] == 0 &&
-                        board.board[row][col + 1] == 0 &&
+                    if (gameState.board[row][col - 1] == 0 &&
+                        gameState.board[row][col] == 0 &&
+                        gameState.board[row][col + 1] == 0 &&
                         CheckValidPath(true, BlockPosition(row, col, true)) &&
                         CheckValidPath(false, BlockPosition(row, col, true)))
                     {
                         validTurns.push_back(Turn(BlockPosition(row, col, true), true));
                     }
                     // Check vertical placement
-                    if (board.board[row - 1][col] == 0 &&
-                        board.board[row][col] == 0 &&
-                        board.board[row + 1][col] == 0 &&
+                    if (gameState.board[row - 1][col] == 0 &&
+                        gameState.board[row][col] == 0 &&
+                        gameState.board[row + 1][col] == 0 &&
                         CheckValidPath(true, BlockPosition(row, col, false)) &&
                         CheckValidPath(false, BlockPosition(row, col, false)))
                     {
@@ -336,21 +362,21 @@ class Quoridor
 
         bool CheckValidPath(bool white, BlockPosition blockPos)
         {
-            BoardPosition start = white ? board.whitePosition : board.blackPosition;
+            BoardPosition start = white ? gameState.whitePosition : gameState.blackPosition;
             std::set<BoardPosition> visited;
 
             // Temporarily place the block
             if (blockPos.horizontal)
             {
-                board.board[blockPos.row][blockPos.col - 1] = '#';
-                board.board[blockPos.row][blockPos.col] = '#';
-                board.board[blockPos.row][blockPos.col + 1] = '#';
+                gameState.board[blockPos.row][blockPos.col - 1] = '#';
+                gameState.board[blockPos.row][blockPos.col] = '#';
+                gameState.board[blockPos.row][blockPos.col + 1] = '#';
             }
             else
             {
-                board.board[blockPos.row - 1][blockPos.col] = '#';
-                board.board[blockPos.row][blockPos.col] = '#';
-                board.board[blockPos.row + 1][blockPos.col] = '#';
+                gameState.board[blockPos.row - 1][blockPos.col] = '#';
+                gameState.board[blockPos.row][blockPos.col] = '#';
+                gameState.board[blockPos.row + 1][blockPos.col] = '#';
             }
 
             bool res = DFS(start, white ? rows * 2 - 2 : 0, visited);
@@ -358,15 +384,15 @@ class Quoridor
             // Remove the temporary block
             if (blockPos.horizontal)
             {
-                board.board[blockPos.row][blockPos.col - 1] = 0;
-                board.board[blockPos.row][blockPos.col] = 0;
-                board.board[blockPos.row][blockPos.col + 1] = 0;
+                gameState.board[blockPos.row][blockPos.col - 1] = 0;
+                gameState.board[blockPos.row][blockPos.col] = 0;
+                gameState.board[blockPos.row][blockPos.col + 1] = 0;
             }
             else
             {
-                board.board[blockPos.row - 1][blockPos.col] = 0;
-                board.board[blockPos.row][blockPos.col] = 0;
-                board.board[blockPos.row + 1][blockPos.col] = 0;
+                gameState.board[blockPos.row - 1][blockPos.col] = 0;
+                gameState.board[blockPos.row][blockPos.col] = 0;
+                gameState.board[blockPos.row + 1][blockPos.col] = 0;
             }
 
             return res;
@@ -460,11 +486,11 @@ class Quoridor
             BoardPosition currentPosition;
             if (white)
             {
-                currentPosition = board.whitePosition;
+                currentPosition = gameState.whitePosition;
             }
             else
             {
-                currentPosition = board.blackPosition;
+                currentPosition = gameState.blackPosition;
             }
 
             if (move.isBlock)
@@ -472,23 +498,23 @@ class Quoridor
                 BlockPosition block = move.turn.block;
                 if (block.horizontal)
                 {
-                    board.board[block.row][block.col - 1] = '#';
-                    board.board[block.row][block.col] = '#';
-                    board.board[block.row][block.col + 1] = '#';
+                    gameState.board[block.row][block.col - 1] = '#';
+                    gameState.board[block.row][block.col] = '#';
+                    gameState.board[block.row][block.col + 1] = '#';
                 }
                 else
                 {
-                    board.board[block.row - 1][block.col] = '#';
-                    board.board[block.row][block.col] = '#';
-                    board.board[block.row + 1][block.col] = '#';
+                    gameState.board[block.row - 1][block.col] = '#';
+                    gameState.board[block.row][block.col] = '#';
+                    gameState.board[block.row + 1][block.col] = '#';
                 }
                 if (white)
                 {
-                    whiteBlocks--;
+                    gameState.whiteBlocks--;
                 }
                 else
                 {
-                    blackBlocks--;
+                    gameState.blackBlocks--;
                 }
                 return false;
             }
@@ -497,9 +523,9 @@ class Quoridor
                 BoardPosition movePos = move.turn.move;
                 if (white)
                 {
-                    board.board[currentPosition.row][currentPosition.col] = 0;
-                    board.whitePosition = movePos;
-                    board.board[movePos.row][movePos.col] = 'W';
+                    gameState.board[currentPosition.row][currentPosition.col] = 0;
+                    gameState.whitePosition = movePos;
+                    gameState.board[movePos.row][movePos.col] = 'W';
                     if (movePos.row == rows * 2 - 2)
                     {
                         return true;
@@ -507,9 +533,9 @@ class Quoridor
                 }
                 else
                 {
-                    board.board[currentPosition.row][currentPosition.col] = 0;
-                    board.blackPosition = movePos;
-                    board.board[movePos.row][movePos.col] = 'B';
+                    gameState.board[currentPosition.row][currentPosition.col] = 0;
+                    gameState.blackPosition = movePos;
+                    gameState.board[movePos.row][movePos.col] = 'B';
                     if (movePos.row == 0)
                     {
                         return true;
@@ -527,23 +553,23 @@ class Quoridor
                 BlockPosition block = move.turn.block;
                 if (block.horizontal)
                 {
-                    board.board[block.row][block.col - 1] = 0;
-                    board.board[block.row][block.col] = 0;
-                    board.board[block.row][block.col + 1] = 0;
+                    gameState.board[block.row][block.col - 1] = 0;
+                    gameState.board[block.row][block.col] = 0;
+                    gameState.board[block.row][block.col + 1] = 0;
                 }
                 else
                 {
-                    board.board[block.row - 1][block.col] = 0;
-                    board.board[block.row][block.col] = 0;
-                    board.board[block.row + 1][block.col] = 0;
+                    gameState.board[block.row - 1][block.col] = 0;
+                    gameState.board[block.row][block.col] = 0;
+                    gameState.board[block.row + 1][block.col] = 0;
                 }
                 if (white)
                 {
-                    whiteBlocks++;
+                    gameState.whiteBlocks++;
                 }
                 else
                 {
-                    blackBlocks++;
+                    gameState.blackBlocks++;
                 }
             }
             else
@@ -551,24 +577,22 @@ class Quoridor
                 // undo move
                 if (white)
                 {
-                    board.board[board.whitePosition.row][board.whitePosition.col] = 0;
-                    board.whitePosition = currentPosition;
-                    board.board[currentPosition.row][currentPosition.col] = 'W';
+                    gameState.board[gameState.whitePosition.row][gameState.whitePosition.col] = 0;
+                    gameState.whitePosition = currentPosition;
+                    gameState.board[currentPosition.row][currentPosition.col] = 'W';
                 }
                 else
                 {
-                    board.board[board.blackPosition.row][board.blackPosition.col] = 0;
-                    board.blackPosition = currentPosition;
-                    board.board[currentPosition.row][currentPosition.col] = 'B';
+                    gameState.board[gameState.blackPosition.row][gameState.blackPosition.col] = 0;
+                    gameState.blackPosition = currentPosition;
+                    gameState.board[currentPosition.row][currentPosition.col] = 'B';
                 }
             }
         };
 
     private:
-        Board<rows, cols> board;
+        Board<rows, cols> gameState;
         int blocksPerPlayer;
-        int whiteBlocks;
-        int blackBlocks;
 
         const int MAX_VALUE = (rows * cols * 2);
         const int MIN_VALUE = -(rows * cols * 2);

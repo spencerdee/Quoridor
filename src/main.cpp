@@ -13,18 +13,18 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
     while (true)
     {
-        if (game.PlayTreeMove(whiteTurn, 4))
+        if (game.PlayTreeMove(whiteTurn, 3))
         {
-            printf("White Player Wins!\n");
+            printf("White Wins!\n");
             break;
         }
         game.PrintBoard();
         printf("\n\nTurn: %d\n", turns);
         turns++;
 
-        if (game.PlayTreeMove(!whiteTurn, 3))
+        if (game.PlayTreeMove(!whiteTurn, 4))
         {
-            printf("Black Player Wins!\n");
+            printf("Black Wins!\n");
             break;
         }
         game.PrintBoard();

@@ -131,6 +131,9 @@ class Board
 
         BoardPosition whitePosition = {0, cols - 1};
         BoardPosition blackPosition = {rows * 2 - 2, cols - 1};
+
+        uint whiteBlocks = 0;
+        uint blackBlocks = 0;
 };
 
 #endif // board
