@@ -24,7 +24,7 @@ add_executable(ProjectName ${SOURCE_FILES})
 
 # find target directories for include paths
 target_include_directories(ProjectName PUBLIC
-    ${CMAKE_SOURCE_DIR}/src/common
+    ${CMAKE_SOURCE_DIR}/src/Common
 )
 
 # tell CMake where to find googletest

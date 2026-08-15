@@ -12,16 +12,20 @@
 #include <stdint.h>
 #include <stdexcept>
 
-template <int rows = 9, int cols = 9>
+template <uint8_t rows = 9, uint8_t cols = 9, uint8_t blocksPerPlayer = 10>
 class Quoridor
 {
     public:
-        Quoridor(int blocksPerPlayer = 10)
+        Quoridor()
         {
-            this->blocksPerPlayer = blocksPerPlayer;
+            static_assert(rows < 10 && cols < 10, "Rows and columns must be less than 10");
+            static_assert(blocksPerPlayer < 10, "Number of blocks per player must be less than 10");
+
             gameState.whiteBlocks = blocksPerPlayer;
             gameState.blackBlocks = blocksPerPlayer;
             srand(static_cast<unsigned int>(std::time(nullptr)));
+
+            InitializeZobristTable();
         };
         ~Quoridor() {};
 
@@ -279,8 +283,8 @@ class Quoridor
                 int newCol = position.col + dir[1];
 
                 // Check if the new position is within bounds and there is no wall blocking the way
-                if (newRow >= 0 && newRow < rows * 2 - 1 &&
-                    newCol >= 0 && newCol < cols * 2 - 1 &&
+                if (newRow >= 0 && newRow < numWallRows &&
+                    newCol >= 0 && newCol < numWallCols &&
                     gameState.board[position.row + dir[0] / 2][position.col + dir[1] / 2] == 0)
                 {
                     if (gameState.board[newRow][newCol] == 0 || ignorePawns)
@@ -292,8 +296,8 @@ class Quoridor
                         // Handle jumping over opponent
                         int jumpRow = newRow + dir[0];
                         int jumpCol = newCol + dir[1];
-                        if (jumpRow >= 0 && jumpRow < rows * 2 - 1 &&
-                            jumpCol >= 0 && jumpCol < cols * 2 - 1 &&
+                        if (jumpRow >= 0 && jumpRow < numWallRows &&
+                            jumpCol >= 0 && jumpCol < numWallCols &&
                             gameState.board[newRow + dir[0] / 2][newCol + dir[1] / 2] == 0 &&
                             gameState.board[jumpRow][jumpCol] == 0)
                         {
@@ -310,8 +314,8 @@ class Quoridor
                             {
                                 int sideRow = newRow + sideDir[0];
                                 int sideCol = newCol + sideDir[1];
-                                if (sideRow >= 0 && sideRow < rows * 2 - 1 &&
-                                    sideCol >= 0 && sideCol < cols * 2 - 1 &&
+                                if (sideRow >= 0 && sideRow < numWallRows &&
+                                    sideCol >= 0 && sideCol < numWallCols &&
                                     gameState.board[newRow + sideDir[0] / 2][newCol + sideDir[1] / 2] == 0 &&
                                     gameState.board[sideRow][sideCol] == 0)
                                 {
@@ -334,9 +338,9 @@ class Quoridor
             {
                 return;
             }
-            for (int row = 1; row < rows * 2 - 1; row += 2)
+            for (int row = 1; row < numWallRows; row += 2)
             {
-                for (int col = 1; col < cols * 2 - 1; col += 2)
+                for (int col = 1; col < numWallCols; col += 2)
                 {
                     // Check horizontal placement
                     if (gameState.board[row][col - 1] == 0 &&
@@ -368,15 +372,15 @@ class Quoridor
             // Temporarily place the block
             if (blockPos.horizontal)
             {
-                gameState.board[blockPos.row][blockPos.col - 1] = '#';
-                gameState.board[blockPos.row][blockPos.col] = '#';
-                gameState.board[blockPos.row][blockPos.col + 1] = '#';
+                gameState.board[blockPos.position.row][blockPos.position.col - 1] = '#';
+                gameState.board[blockPos.position.row][blockPos.position.col] = '#';
+                gameState.board[blockPos.position.row][blockPos.position.col + 1] = '#';
             }
             else
             {
-                gameState.board[blockPos.row - 1][blockPos.col] = '#';
-                gameState.board[blockPos.row][blockPos.col] = '#';
-                gameState.board[blockPos.row + 1][blockPos.col] = '#';
+                gameState.board[blockPos.position.row - 1][blockPos.position.col] = '#';
+                gameState.board[blockPos.position.row][blockPos.position.col] = '#';
+                gameState.board[blockPos.position.row + 1][blockPos.position.col] = '#';
             }
 
             bool res = DFS(start, white ? rows * 2 - 2 : 0, visited);
@@ -384,15 +388,15 @@ class Quoridor
             // Remove the temporary block
             if (blockPos.horizontal)
             {
-                gameState.board[blockPos.row][blockPos.col - 1] = 0;
-                gameState.board[blockPos.row][blockPos.col] = 0;
-                gameState.board[blockPos.row][blockPos.col + 1] = 0;
+                gameState.board[blockPos.position.row][blockPos.position.col - 1] = 0;
+                gameState.board[blockPos.position.row][blockPos.position.col] = 0;
+                gameState.board[blockPos.position.row][blockPos.position.col + 1] = 0;
             }
             else
             {
-                gameState.board[blockPos.row - 1][blockPos.col] = 0;
-                gameState.board[blockPos.row][blockPos.col] = 0;
-                gameState.board[blockPos.row + 1][blockPos.col] = 0;
+                gameState.board[blockPos.position.row - 1][blockPos.position.col] = 0;
+                gameState.board[blockPos.position.row][blockPos.position.col] = 0;
+                gameState.board[blockPos.position.row + 1][blockPos.position.col] = 0;
             }
 
             return res;
@@ -498,15 +502,15 @@ class Quoridor
                 BlockPosition block = move.turn.block;
                 if (block.horizontal)
                 {
-                    gameState.board[block.row][block.col - 1] = '#';
-                    gameState.board[block.row][block.col] = '#';
-                    gameState.board[block.row][block.col + 1] = '#';
+                    gameState.board[block.position.row][block.position.col - 1] = '#';
+                    gameState.board[block.position.row][block.position.col] = '#';
+                    gameState.board[block.position.row][block.position.col + 1] = '#';
                 }
                 else
                 {
-                    gameState.board[block.row - 1][block.col] = '#';
-                    gameState.board[block.row][block.col] = '#';
-                    gameState.board[block.row + 1][block.col] = '#';
+                    gameState.board[block.position.row - 1][block.position.col] = '#';
+                    gameState.board[block.position.row][block.position.col] = '#';
+                    gameState.board[block.position.row + 1][block.position.col] = '#';
                 }
                 if (white)
                 {
@@ -553,15 +557,15 @@ class Quoridor
                 BlockPosition block = move.turn.block;
                 if (block.horizontal)
                 {
-                    gameState.board[block.row][block.col - 1] = 0;
-                    gameState.board[block.row][block.col] = 0;
-                    gameState.board[block.row][block.col + 1] = 0;
+                    gameState.board[block.position.row][block.position.col - 1] = 0;
+                    gameState.board[block.position.row][block.position.col] = 0;
+                    gameState.board[block.position.row][block.position.col + 1] = 0;
                 }
                 else
                 {
-                    gameState.board[block.row - 1][block.col] = 0;
-                    gameState.board[block.row][block.col] = 0;
-                    gameState.board[block.row + 1][block.col] = 0;
+                    gameState.board[block.position.row - 1][block.position.col] = 0;
+                    gameState.board[block.position.row][block.position.col] = 0;
+                    gameState.board[block.position.row + 1][block.position.col] = 0;
                 }
                 if (white)
                 {
@@ -591,11 +595,67 @@ class Quoridor
         };
 
     private:
-        Board<rows, cols> gameState;
-        int blocksPerPlayer;
+        constexpr static int numWallRows = (rows * 2 - 1);
+        constexpr static int numWallCols = (cols * 2 - 1);
 
+        struct ZobristTable {
+            // 2 Players, with rows x cols positions for pawns
+            uint64_t pawn_positions[2][rows][cols];
+
+            // 2 Orientations (Horizontal=1, Vertical=0)
+            uint64_t walls[2][numWallRows][numWallCols];
+
+            // 2 Players, with blocksPerPlayer possible wall counts (0 through blocksPerPlayer)
+            uint64_t wall_inventory[2][blocksPerPlayer + 1];
+
+            // Applied to the hash if it is whites turn to move, otherwise it is black's turn to move
+            uint64_t white_to_move;
+        };
+
+        void InitializeZobristTable()
+        {
+            // 1. Set up the random number generator
+            std::mt19937_64 rng(0x12345678); 
+    
+            // 2. Set up the distribution to cover the full 64-bit range
+            std::uniform_int_distribution<uint64_t> dist;
+
+            // 3. Fill the Zobrist table with random numbers
+            for (int player = 0; player < 2; ++player) {
+                for (int row = 0; row < rows; ++row) {
+                    for (int col = 0; col < cols; ++col) {
+                        zobristTable.pawn_positions[player][row][col] = dist(rng);
+                    }
+                }
+            }
+
+            for (int orientation = 0; orientation < 2; ++orientation) {
+                for (int row = 0; row < numWallRows; ++row) {
+                    for (int col = 0; col < numWallCols; ++col) {
+                        zobristTable.walls[orientation][row][col] = dist(rng);
+                    }
+                }
+            }
+
+            for (int player = 0; player < 2; ++player) {
+                for (int count = 0; count <= blocksPerPlayer; ++count) {
+                    zobristTable.wall_inventory[player][count] = dist(rng);
+                }
+            }
+
+            zobristTable.white_to_move = dist(rng);
+        };
+
+        // The current gamestate
+        Board<rows, cols> gameState;
+
+        // Define the maximum and minimum values for the evaluation function
+        // Set to twice the total number of cells on the board to ensure that any 
+        // generated path on the board will be smaller than these values
         const int MAX_VALUE = (rows * cols * 2);
         const int MIN_VALUE = -(rows * cols * 2);
+
+        ZobristTable zobristTable;
 };
 
 #endif // quoridorhpp

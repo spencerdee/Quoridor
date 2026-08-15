@@ -2,11 +2,15 @@
 #define boardhpp
 
 #include <cstring>
+#include "Common.hpp"
 
+/**
+ * @brief Represents a position on the board with row and column coordinates.
+ */
 struct BoardPosition
 {
-    int row;
-    int col;
+    uint8_t row;
+    uint8_t col;
 
     bool operator==(const BoardPosition& other) const
     {
@@ -19,37 +23,48 @@ struct BoardPosition
     }
 };
 
+/**
+ * @brief Represents a position of a block on the board.
+ * @details The block can be placed either horizontally or vertically, indicated by the `horizontal` boolean.
+ */
 struct BlockPosition
 {
-    int row;
-    int col;
-    bool horizontal;
+    BoardPosition position;
+    bool horizontal : 1;
 };
 
-struct Turn
+/**
+ * @brief Represents a turn in the game, which can be either a move or a block placement.
+ */
+struct PACKED Turn
 {
-    union
-    {
-        BoardPosition move;
-        BlockPosition block;
-    } turn;
-    bool isBlock;
+    uint8_t row : 7;
+    uint8_t col : 7;
+    bool horizontal : 1;
+    bool isBlock : 1;
 
-    Turn(BoardPosition position, bool isBlock)
+    Turn(BoardPosition position)
     {
-        turn.move = position;
-        this->isBlock = isBlock;
+        this->row = position.row;
+        this->col = position.col;
+        this->horizontal = false;
+        this->isBlock = false;
     };
 
-    Turn(BlockPosition blockPosition, bool isBlock)
+    Turn(BlockPosition blockPosition)
     {
-        turn.block = blockPosition;
-        this->isBlock = isBlock;
+        this->row = blockPosition.position.row;
+        this->col = blockPosition.position.col;
+        this->horizontal = blockPosition.horizontal;
+        this->isBlock = true;
     };
 
     Turn() {};
 };
 
+/**
+ * @brief Represents a node in the A* search algorithm.
+ */
 struct AStarNode
 {
     BoardPosition position;
