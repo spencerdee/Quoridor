@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-    printf("%d", sizeof(BlockPosition));
+    printf("%d", sizeof(Turn));
 }
 
 // int main(int argc, char *argv[])

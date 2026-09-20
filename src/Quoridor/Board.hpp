@@ -60,6 +60,11 @@ struct PACKED Turn
     };
 
     Turn() {};
+
+    BoardPosition GetBoardPosition() const
+    {
+        return BoardPosition{row, col};
+    }
 };
 
 /**

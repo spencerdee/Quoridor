@@ -85,7 +85,7 @@ class Quoridor
                 }
                 else
                 {
-                    cost = AStarSearch(pos.turn.move, white) - AStarSearch(opponentPosition, !white);
+                    cost = AStarSearch(pos.GetBoardPosition(), white) - AStarSearch(opponentPosition, !white);
                 }
                 
                 UndoMove(pos, white, currentPosition);
@@ -289,7 +289,7 @@ class Quoridor
                 {
                     if (gameState.board[newRow][newCol] == 0 || ignorePawns)
                     {
-                        validTurns.push_back({BoardPosition{newRow, newCol}, false});
+                        validTurns.push_back(Turn{.row = newRow, .col = newCol, .horizontal = false, .isBlock = false});
                     }
                     else
                     {
@@ -301,7 +301,7 @@ class Quoridor
                             gameState.board[newRow + dir[0] / 2][newCol + dir[1] / 2] == 0 &&
                             gameState.board[jumpRow][jumpCol] == 0)
                         {
-                            validTurns.push_back({BoardPosition{jumpRow, jumpCol}, false});
+                            validTurns.push_back(Turn{.row = jumpRow, .col = jumpCol, .horizontal = false, .isBlock = false});
                         }
                         else
                         {
@@ -319,7 +319,7 @@ class Quoridor
                                     gameState.board[newRow + sideDir[0] / 2][newCol + sideDir[1] / 2] == 0 &&
                                     gameState.board[sideRow][sideCol] == 0)
                                 {
-                                    validTurns.push_back({BoardPosition{sideRow, sideCol}, false});
+                                    validTurns.push_back(Turn{.row = sideRow, .col = sideCol, .horizontal = false, .isBlock = false});
                                 }
                             }
                         }
@@ -358,7 +358,8 @@ class Quoridor
                         CheckValidPath(true, BlockPosition(row, col, false)) &&
                         CheckValidPath(false, BlockPosition(row, col, false)))
                     {
-                        validTurns.push_back({BlockPosition(row, col, false), true});
+                        // validTurns.push_back({BlockPosition(row, col, false), true});
+                        validTurns.push_back(Turn{.row = row, .col = col, .horizontal = false, .isBlock = true});
                     }
                 }
             }
@@ -414,15 +415,15 @@ class Quoridor
             std::vector<Turn> neighbors;
             GenerateValidMoves(position, neighbors);
 
-            for (const auto& neighbor : neighbors)
+            for (const Turn& neighbor : neighbors)
             {
-                if (visited.contains(neighbor.turn.move))
+                if (visited.contains(neighbor.GetBoardPosition()))
                 {
                     continue;
                 }
                 else
                 {
-                    if (DFS(neighbor.turn.move, goalRow, visited))
+                    if (DFS(neighbor.GetBoardPosition(), goalRow, visited))
                     {
                         return true;
                     }
@@ -466,18 +467,18 @@ class Quoridor
                 // Explore neighbors and update costs
                 std::vector<Turn> validTurns;
                 GenerateValidMoves(current.position, validTurns, true);
-                for (const auto& pos : validTurns)
+                for (const Turn& pos : validTurns)
                 {
-                    AStarNode neighbor = AStarNode(pos.turn.move, current.gCost + 2, CalculateHeuristic(pos.turn.move, white), &visitedNodes[current.position]);
-                    if (!visitedNodes.contains(pos.turn.move))
+                    AStarNode neighbor = AStarNode(pos.GetBoardPosition(), current.gCost + 2, CalculateHeuristic(pos.GetBoardPosition(), white), &visitedNodes[current.position]);
+                    if (!visitedNodes.contains(pos.GetBoardPosition()))
                     {
                         openSet.push(neighbor);
                     }
-                    else if (visitedNodes[pos.turn.move].gCost > neighbor.gCost)
+                    else if (visitedNodes[pos.GetBoardPosition()].gCost > neighbor.gCost)
                     {
-                        visitedNodes[pos.turn.move].gCost = neighbor.gCost;
-                        visitedNodes[pos.turn.move].parent = &visitedNodes[current.position];
-                        openSet.push(visitedNodes[pos.turn.move]);
+                        visitedNodes[pos.GetBoardPosition()].gCost = neighbor.gCost;
+                        visitedNodes[pos.GetBoardPosition()].parent = &visitedNodes[current.position];
+                        openSet.push(visitedNodes[pos.GetBoardPosition()]);
                     }
                 }
             }
@@ -499,18 +500,17 @@ class Quoridor
 
             if (move.isBlock)
             {
-                BlockPosition block = move.turn.block;
-                if (block.horizontal)
+                if (move.horizontal)
                 {
-                    gameState.board[block.position.row][block.position.col - 1] = '#';
-                    gameState.board[block.position.row][block.position.col] = '#';
-                    gameState.board[block.position.row][block.position.col + 1] = '#';
+                    gameState.board[move.row][move.col - 1] = '#';
+                    gameState.board[move.row][move.col] = '#';
+                    gameState.board[move.row][move.col + 1] = '#';
                 }
                 else
                 {
-                    gameState.board[block.position.row - 1][block.position.col] = '#';
-                    gameState.board[block.position.row][block.position.col] = '#';
-                    gameState.board[block.position.row + 1][block.position.col] = '#';
+                    gameState.board[move.row - 1][move.col] = '#';
+                    gameState.board[move.row][move.col] = '#';
+                    gameState.board[move.row + 1][move.col] = '#';
                 }
                 if (white)
                 {
@@ -524,7 +524,7 @@ class Quoridor
             }
             else
             {
-                BoardPosition movePos = move.turn.move;
+                BoardPosition movePos = move.GetBoardPosition();
                 if (white)
                 {
                     gameState.board[currentPosition.row][currentPosition.col] = 0;
@@ -554,18 +554,17 @@ class Quoridor
             if (move.isBlock)
             {
                 // undo block placement
-                BlockPosition block = move.turn.block;
-                if (block.horizontal)
+                if (move.horizontal)
                 {
-                    gameState.board[block.position.row][block.position.col - 1] = 0;
-                    gameState.board[block.position.row][block.position.col] = 0;
-                    gameState.board[block.position.row][block.position.col + 1] = 0;
+                    gameState.board[move.row][move.col - 1] = 0;
+                    gameState.board[move.row][move.col] = 0;
+                    gameState.board[move.row][move.col + 1] = 0;
                 }
                 else
                 {
-                    gameState.board[block.position.row - 1][block.position.col] = 0;
-                    gameState.board[block.position.row][block.position.col] = 0;
-                    gameState.board[block.position.row + 1][block.position.col] = 0;
+                    gameState.board[move.row - 1][move.col] = 0;
+                    gameState.board[move.row][move.col] = 0;
+                    gameState.board[move.row + 1][move.col] = 0;
                 }
                 if (white)
                 {

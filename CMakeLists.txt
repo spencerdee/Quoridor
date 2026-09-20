@@ -27,6 +27,9 @@ target_include_directories(ProjectName PUBLIC
     ${CMAKE_SOURCE_DIR}/src/Common
 )
 
+# disable warnings for packed bitfields
+target_compile_options(ProjectName PRIVATE "-Wno-packed-bitfield-compat")
+
 # tell CMake where to find googletest
 file(TO_CMAKE_PATH "$ENV{HOME}" HOME_CMAKE)
 
